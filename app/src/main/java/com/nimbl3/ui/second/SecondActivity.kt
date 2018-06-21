@@ -5,6 +5,8 @@ import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.support.v4.app.Fragment
+import android.support.v4.app.FragmentManager
 import com.nimbl3.R
 import com.nimbl3.data.lib.schedulers.SchedulersProvider
 import com.nimbl3.ui.base.BaseActivity
@@ -12,6 +14,9 @@ import com.nimbl3.ui.main.Const
 import com.nimbl3.ui.main.data.Data
 import kotlinx.android.synthetic.main.activity_second.*
 import javax.inject.Inject
+import android.support.v4.app.FragmentStatePagerAdapter
+import com.nimbl3.ui.second.fragment.SimplePagerFragment
+
 
 class SecondActivity : BaseActivity() {
 
@@ -34,8 +39,14 @@ class SecondActivity : BaseActivity() {
         viewModel.outputs
             .setPersistedData()
             .observeOn(schedulers.main())
-            .subscribe { persistTextView.text = it.content }
+            .subscribe(this::setupViewPager)
             .bindForDisposable()
+    }
+
+    private fun setupViewPager(data: Data) {
+        val contentList = data.content.split("\n\n")
+        val adapter = ScreenSlidePagerAdapter(supportFragmentManager, contentList)
+        viewPager.adapter = adapter
     }
 
     companion object {
@@ -44,6 +55,18 @@ class SecondActivity : BaseActivity() {
             val intent = Intent(from, SecondActivity::class.java)
             intent.putExtra(Const.EXTRAS_DATA, data)
             from.startActivity(intent)
+        }
+    }
+
+    private inner class ScreenSlidePagerAdapter(fm: FragmentManager, private val contentList: List<String>)
+        : FragmentStatePagerAdapter(fm) {
+
+        override fun getItem(position: Int): Fragment {
+            return SimplePagerFragment.newInstance(contentList[position])
+        }
+
+        override fun getCount(): Int {
+            return contentList.size
         }
     }
 }
